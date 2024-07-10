@@ -1,35 +1,59 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useRef, useState } from "react";
+import useImageCropper from "./useImageCropper";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const {
+    setInputObjectURL,
+    cropperComponent,
+    onCropReset,
+    onGenerateCroppedImage,
+  } = useImageCropper();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [output, setOutput] = useState<string | null>(null);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const objectURL = URL.createObjectURL(file);
+    setInputObjectURL(objectURL);
+  };
+
+  const handleClear = () => {
+    onCropReset();
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
+  const handleComplete = async () => {
+    const blob = (await onGenerateCroppedImage()) as Blob;
+    console.log("blob", blob);
+    setOutput(URL.createObjectURL(blob));
+  };
 
   return (
     <>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <input type="file" ref={inputRef} onChange={handleChange} />
+        <div>
+          <button onClick={handleClear}>Clear</button>
+          <button onClick={handleComplete}>Complete</button>
+        </div>
+        <div
+          style={{
+            position: "relative",
+            width: "900px",
+            height: "600px",
+          }}
+        >
+          {cropperComponent}
+        </div>
+        <div>{output && <img src={output} alt="output" />}</div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
