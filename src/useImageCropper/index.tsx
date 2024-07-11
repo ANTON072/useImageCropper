@@ -1,17 +1,36 @@
 import { useMemo, useState } from "react";
 
 import Cropper, { Area, CropperProps } from "react-easy-crop";
-import ImageBlobReduce from "image-blob-reduce";
-import { getCroppedBlob } from "./utils";
+import { ResizeOptions } from "image-blob-reduce";
+
+import { getCroppedBlob, reduceImageBlob } from "./utils";
 
 interface UseImageCropper {
-  aspect?: number;
+  cropOptions?: Partial<
+    Pick<
+      CropperProps,
+      | "aspect"
+      | "cropShape"
+      | "minZoom"
+      | "maxZoom"
+      | "zoomWithScroll"
+      | "zoomSpeed"
+      | "showGrid"
+      | "objectFit"
+      | "style"
+      | "classes"
+    >
+  >;
+  resizeOptions?: ResizeOptions;
 }
 
-const useImageCropper = ({ aspect = 4 / 3 }: UseImageCropper = {}) => {
+const useImageCropper = ({
+  cropOptions = {
+    aspect: 4 / 3,
+  },
+  resizeOptions = {},
+}: UseImageCropper = {}) => {
   const [inputObjectURL, setInputObjectURL] = useState<string | null>(null);
-  // cropした後の画像のファイルサイズ（バリデーションに利用する）
-  const [outputFileSize, setOutputFileSize] = useState<number>(0);
   // cropした後の画像のピクセル情報
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area>();
 
@@ -21,7 +40,6 @@ const useImageCropper = ({ aspect = 4 / 3 }: UseImageCropper = {}) => {
   const onCropReset = () => {
     if (inputObjectURL) URL.revokeObjectURL(inputObjectURL);
     setInputObjectURL(null);
-    setOutputFileSize(0);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
   };
@@ -36,19 +54,14 @@ const useImageCropper = ({ aspect = 4 / 3 }: UseImageCropper = {}) => {
   };
 
   const onGenerateCroppedImage = async () => {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      if (!inputObjectURL || !croppedAreaPixels) {
-        reject(new Error("Failed to generate cropped image"));
-        return;
-      }
-      const croppedBlob = await getCroppedBlob(
-        inputObjectURL,
-        croppedAreaPixels
-      );
-      resolve(croppedBlob);
-      // console.log("croppedBlob", croppedBlob);
-    });
+    if (!inputObjectURL || !croppedAreaPixels) {
+      return;
+    }
+    const croppedBlob = await getCroppedBlob(inputObjectURL, croppedAreaPixels);
+    if (!croppedBlob) {
+      return;
+    }
+    return reduceImageBlob(croppedBlob, resizeOptions);
   };
 
   const cropperComponent = useMemo(() => {
@@ -56,16 +69,16 @@ const useImageCropper = ({ aspect = 4 / 3 }: UseImageCropper = {}) => {
 
     return (
       <Cropper
+        {...cropOptions}
         image={inputObjectURL}
         crop={crop}
         zoom={zoom}
-        aspect={aspect}
         onCropComplete={onCropComplete}
         onCropChange={setCrop}
         onZoomChange={setZoom}
       />
     );
-  }, [aspect, crop, inputObjectURL, zoom]);
+  }, [crop, cropOptions, inputObjectURL, zoom]);
 
   return {
     setInputObjectURL,
@@ -74,7 +87,6 @@ const useImageCropper = ({ aspect = 4 / 3 }: UseImageCropper = {}) => {
     setZoom,
     onCropReset,
     onGenerateCroppedImage,
-    outputFileSize,
   };
 };
 

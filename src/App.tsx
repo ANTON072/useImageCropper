@@ -7,7 +7,12 @@ function App() {
     cropperComponent,
     onCropReset,
     onGenerateCroppedImage,
-  } = useImageCropper();
+  } = useImageCropper({
+    resizeOptions: {
+      max: 500,
+    },
+  });
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [output, setOutput] = useState<string | null>(null);
@@ -29,7 +34,6 @@ function App() {
 
   const handleComplete = async () => {
     const blob = (await onGenerateCroppedImage()) as Blob;
-    console.log("blob", blob);
     setOutput(URL.createObjectURL(blob));
   };
 

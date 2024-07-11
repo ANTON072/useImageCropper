@@ -1,3 +1,4 @@
+import imageBlobReduce, { ResizeOptions } from "image-blob-reduce";
 import { Area } from "react-easy-crop";
 
 export const createImageElement = (objectURL: string) => {
@@ -14,6 +15,9 @@ export const createImageElement = (objectURL: string) => {
   });
 };
 
+/**
+ * 選択範囲を切り抜いたBlobを取得する
+ */
 export const getCroppedBlob = async (
   objectURL: string,
   croppedAreaPixels: Area
@@ -45,4 +49,12 @@ export const getCroppedBlob = async (
       resolve(blob);
     });
   });
+};
+
+export const reduceImageBlob = async (
+  blob: Blob,
+  resizeOptions: ResizeOptions
+) => {
+  const reducer = new imageBlobReduce();
+  return await reducer.toBlob(blob, resizeOptions);
 };
