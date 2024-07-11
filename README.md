@@ -1,1 +1,3 @@
 # useImageCropper
+
+![](./docs/screen.gif)
