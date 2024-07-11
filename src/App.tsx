@@ -61,8 +61,8 @@ function App() {
         <div
           style={{
             position: "relative",
-            width: "900px",
-            height: "600px",
+            width: "500px",
+            height: "300px",
           }}
         >
           {cropperComponent}
